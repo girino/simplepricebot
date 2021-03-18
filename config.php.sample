@@ -10,8 +10,12 @@ $telegramchatid=-000000000;
 $userid=000000000;
 
 // target to watch
-$watch_pair = array("BTC", "USDT");
-$watch_value = 64000.00;
+$watch_values = array(
+    array("BTC", "USDT", 64000.00),
+    array("BTC", "USDT", 60000.00),
+    array("BTC", "USDT", 55000.00),
+    array("BTC", "USDT", 50000.00)
+);
 
 // other tickers to watch, those will be reporter every $sleep_time seconds
 // disable notifications for the group so you only get notified when
@@ -23,5 +27,5 @@ $list_tickers = array(
 );
 
 // time between updates. will poll binance API every $sleep_time seconds and report
-$sleep_time = 600;
+$sleep_time = 10;
 ?>

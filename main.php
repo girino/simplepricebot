@@ -7,7 +7,7 @@
  * License: https://license.girino.org
  */
 
-require_once('config.php');
+include 'config.php';
 
 // Telegram function which you can call
 function getChatMember() {
@@ -64,17 +64,26 @@ if (property_exists($member, "user") && property_exists($member->user, "username
 } else {
 	$username = "anonymous";
 }
-$state = "UNDER";
+$states = array();
 while (true) {
 
+	// reread the include file
+	include 'config.php';
+
 	$ticker = ticker();
-	$watch_ticker = implode("", $watch_pair);
-	if ($state == "UNDER" && $ticker[$watch_ticker] >= $watch_value) {
-		telegram("[".$username."](tg://user?id=". $userid .") *Cotação $watch_ticker acima de " . $watch_value . " " . $watch_pair[1] . "*");
-		$state = "OVER";
-	} elseif ($state != "UNDER" && $ticker[$watch_ticker] < $watch_value) {
-		telegram("[".$username."](tg://user?id=". $userid .") *Cotação $watch_ticker abaixo de " . $watch_value . " " . $watch_pair[1] . "*");
-		$state = "UNDER";
+	foreach ($watch_values as $watch_tuple) {
+		$watch_ticker = $watch_tuple[0].$watch_tuple[1];
+		$watch_value = $watch_tuple[2];
+		$key = $watch_ticker.$watch_value;
+		if (!array_key_exists($key, $states)) {
+			$states[$key] = ($ticker[$watch_ticker] < $watch_value) ? "UNDER" : "OVER";
+		} elseif ($states[$key] == "UNDER" && $ticker[$watch_ticker] >= $watch_value) {
+			telegram("[".$username."](tg://user?id=". $userid .") *Cotação $watch_ticker acima de " . $watch_value . " " . $watch_tuple[1] . "*");
+			$states[$key] = "OVER";
+		} elseif ($states[$key] != "UNDER" && $ticker[$watch_ticker] < $watch_value) {
+			telegram("[".$username."](tg://user?id=". $userid .") *Cotação $watch_ticker abaixo de " . $watch_value . " " . $watch_tuple[1] . "*");
+			$states[$key] = "UNDER";
+		}
 	}
 
 	$out = implode("\n", array_map(function ($m) use ($ticker) {	return cotacao($ticker, $m[0], $m[1]);	}, $list_tickers));
