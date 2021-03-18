@@ -5,3 +5,9 @@ a target value and marks you in the message when target value is attaines, so yo
 on telegram.
 
 Made for personal use, but might be useful for someone else, at least to leran how to code a bot.
+
+## usage
+
+Edit config.php.sample and rename it to config.php. Then run `php main.php`
+
+Alternatelly, use docker-compose: `docker-compose up -d`
