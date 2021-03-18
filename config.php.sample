@@ -1,0 +1,27 @@
+<?php
+// Bot key, see https://core.telegram.org/bots#6-botfather
+$telegrambot='0000000000:XXXXXXXXX-XXXXXXXXXXXXXXXXXXXX-XXXX';
+// create a group chat with your bot and get the group id from the updates
+// the bot will talk exclusively to this group
+// groups are negative numbers
+$telegramchatid=-000000000;
+// get your userid from the updates.
+// the bot will mark you when the target price is reached
+$userid=000000000;
+
+// target to watch
+$watch_pair = array("BTC", "USDT");
+$watch_value = 64000.00;
+
+// other tickers to watch, those will be reporter every $sleep_time seconds
+// disable notifications for the group so you only get notified when
+// the target is reached
+$list_tickers = array(
+    array("BTC","USDT"), 
+    array("BTC","BRL"), 
+    array("DCR","BTC")
+);
+
+// time between updates. will poll binance API every $sleep_time seconds and report
+$sleep_time = 600;
+?>

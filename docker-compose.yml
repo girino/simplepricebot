@@ -1,0 +1,10 @@
+version: '2'
+services:
+ pricebot:
+  restart: unless-stopped
+  hostname: pricebot
+  build:
+   context: .
+   dockerfile: Dockerfile
+  volumes:
+   - ./config.php:/usr/src/app/config.php:ro
