@@ -25,6 +25,8 @@ $list_tickers = array(
     array("BTC","BRL"), 
     array("DCR","BTC")
 );
+// Changes less than +or- (old-price * tickers_min_change_percent) are not reported.
+$tickers_delta = 0.01;
 
 // time between updates. will poll binance API every $sleep_time seconds and report
 $sleep_time = 10;

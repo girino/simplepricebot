@@ -30,6 +30,8 @@ function telegram($msg) {
         $options=array('http'=>array('method'=>'POST','header'=>"Content-Type:application/x-www-form-urlencoded\r\n",'content'=>http_build_query($data),),);
         $context=stream_context_create($options);
         $result=file_get_contents($url,false,$context);
+		// prints to stdout too
+		print($msg . "\n");
         return $result;
 }
 
@@ -46,16 +48,20 @@ function ticker() {
 	return $ret;
 }
 
-function cotacao($ticker, $curr, $base) {
+function getTicker($ticker, $curr, $base) {
 	if (array_key_exists($curr.$base, $ticker)) {
-		$v = $ticker[$curr.$base];
+		return $ticker[$curr.$base];
 	} else if (array_key_exists($base.$curr, $ticker)) {
-		$v = 1.0 / $ticker[$base.$curr];
-	} else {
-		$v = "Err not found";
+		return 1.0 / $ticker[$base.$curr];
 	}
+	return false;
+}
 
-	return "Cotação do " . $curr . " = ". $v . " " . $base;
+function checkdelta($new, $old, $delta) {
+	if ( abs($new - $old) > ($old*$delta) ) {
+		return true;
+	}
+	return false;
 }
 
 $member = getChatMember();
@@ -65,6 +71,7 @@ if (property_exists($member, "user") && property_exists($member->user, "username
 	$username = "anonymous";
 }
 $states = array();
+$oldprices = array();
 while (true) {
 
 	// reread the include file
@@ -86,9 +93,23 @@ while (true) {
 		}
 	}
 
-	$out = implode("\n", array_map(function ($m) use ($ticker) {	return cotacao($ticker, $m[0], $m[1]);	}, $list_tickers));
-	telegram($out);
-	print($out . "\n\n");
+
+	$keys = array_map(function ($m) { return $m[0].$m[1]; }, $list_tickers);
+	$prices = array_map(function ($m) use ($ticker) { return getTicker($ticker, $m[0], $m[1]); }, $list_tickers);
+	$oldprices_a = array_map(function ($key, $price) use ($oldprices, $tickers_delta) { return array_key_exists($key, $oldprices) ? $oldprices[$key] : $price * (2.0 + 2.0*$tickers_delta); }, $keys, $prices);
+	$oldprices = array_combine($keys, $oldprices_a);
+	$changes = array_map(function ($new, $old) use ($tickers_delta) { return checkdelta($new, $old, $tickers_delta); }, $prices, $oldprices_a);
+	$has_changes = in_array(true, $changes);
+	if ($has_changes) {
+		$out_a = array_map(function ($m, $p) { return ($p) 
+													? "Cotação do " . $m[0] . " = ". $p . " " . $m[1] 
+													: "Markets for " . $m[0] . " and " . $m[1] . " not found"; 
+												}, $list_tickers, $prices);
+		$out = implode("\n", $out_a);
+		$oldprices = array_combine($keys, $prices);
+		telegram($out);
+	}
+	print("==============================\n");
 	sleep($sleep_time);
 }
 ?>
