@@ -23,16 +23,29 @@ function getChatMember() {
 
 
 // Telegram function which you can call
+function discord($msg) {
+	global $webhookurl;
+	$url=$webhookurl;
+	$data=array('content'=>$msg);
+	$options=array('http'=>array('method'=>'POST','header'=>"Content-Type:application/x-www-form-urlencoded\r\n",'content'=>http_build_query($data),),);
+	$context=stream_context_create($options);
+	$result=file_get_contents($url,false,$context);
+	// prints to stdout too
+	print($msg . "\n");
+	return $result;
+}
+
+// send message to discord
 function telegram($msg) {
-        global $telegrambot,$telegramchatid;
-        $url='https://api.telegram.org/bot'.$telegrambot.'/sendMessage';
-		$data=array('chat_id'=>$telegramchatid,'text'=>$msg,'parse_mode'=>'markdown');
-        $options=array('http'=>array('method'=>'POST','header'=>"Content-Type:application/x-www-form-urlencoded\r\n",'content'=>http_build_query($data),),);
-        $context=stream_context_create($options);
-        $result=file_get_contents($url,false,$context);
-		// prints to stdout too
-		print($msg . "\n");
-        return $result;
+	global $telegrambot,$telegramchatid;
+	$url='https://api.telegram.org/bot'.$telegrambot.'/sendMessage';
+	$data=array('chat_id'=>$telegramchatid,'text'=>$msg,'parse_mode'=>'markdown');
+	$options=array('http'=>array('method'=>'POST','header'=>"Content-Type:application/x-www-form-urlencoded\r\n",'content'=>http_build_query($data),),);
+	$context=stream_context_create($options);
+	$result=file_get_contents($url,false,$context);
+	// prints to stdout too
+	print($msg . "\n");
+	return $result;
 }
 
 function ticker() {
@@ -64,12 +77,6 @@ function checkdelta($new, $old, $delta) {
 	return false;
 }
 
-$member = getChatMember();
-if (property_exists($member, "user") && property_exists($member->user, "username")) {
-	$username = $member->user->username;
-} else {
-	$username = "anonymous";
-}
 $states = array();
 $oldprices = array();
 while (true) {
@@ -78,18 +85,27 @@ while (true) {
 	include 'config.php';
 
 	$ticker = ticker();
-	foreach ($watch_values as $watch_tuple) {
-		$watch_ticker = $watch_tuple[0].$watch_tuple[1];
-		$watch_value = $watch_tuple[2];
-		$key = $watch_ticker.$watch_value;
-		if (!array_key_exists($key, $states)) {
-			$states[$key] = ($ticker[$watch_ticker] < $watch_value) ? "UNDER" : "OVER";
-		} elseif ($states[$key] == "UNDER" && $ticker[$watch_ticker] >= $watch_value) {
-			telegram("[".$username."](tg://user?id=". $userid .") *Cotação $watch_ticker acima de " . $watch_value . " " . $watch_tuple[1] . "*");
-			$states[$key] = "OVER";
-		} elseif ($states[$key] != "UNDER" && $ticker[$watch_ticker] < $watch_value) {
-			telegram("[".$username."](tg://user?id=". $userid .") *Cotação $watch_ticker abaixo de " . $watch_value . " " . $watch_tuple[1] . "*");
-			$states[$key] = "UNDER";
+	// getting usernames not implemented for discord yet
+	if (!$usediscord) {
+		$member = getChatMember();
+		if (property_exists($member, "user") && property_exists($member->user, "username")) {
+			$username = $member->user->username;
+		} else {
+			$username = "anonymous";
+		}
+		foreach ($watch_values as $watch_tuple) {
+			$watch_ticker = $watch_tuple[0].$watch_tuple[1];
+			$watch_value = $watch_tuple[2];
+			$key = $watch_ticker.$watch_value;
+			if (!array_key_exists($key, $states)) {
+				$states[$key] = ($ticker[$watch_ticker] < $watch_value) ? "UNDER" : "OVER";
+			} elseif ($states[$key] == "UNDER" && $ticker[$watch_ticker] >= $watch_value) {
+				telegram("[".$username."](tg://user?id=". $userid .") *Cotação $watch_ticker acima de " . $watch_value . " " . $watch_tuple[1] . "*");
+				$states[$key] = "OVER";
+			} elseif ($states[$key] != "UNDER" && $ticker[$watch_ticker] < $watch_value) {
+				telegram("[".$username."](tg://user?id=". $userid .") *Cotação $watch_ticker abaixo de " . $watch_value . " " . $watch_tuple[1] . "*");
+				$states[$key] = "UNDER";
+			}
 		}
 	}
 
@@ -107,7 +123,11 @@ while (true) {
 												}, $list_tickers, $prices);
 		$out = implode("\n", $out_a);
 		$oldprices = array_combine($keys, $prices);
-		telegram($out);
+		if ($usediscord) {
+			discord($out);
+		} else {
+			telegram($out);
+		}
 	}
 	print("==============================\n");
 	sleep($sleep_time);

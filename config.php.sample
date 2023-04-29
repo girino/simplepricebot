@@ -9,6 +9,12 @@ $telegramchatid=-000000000;
 // the bot will mark you when the target price is reached
 $userid=000000000;
 
+// if using discord (because telegram was banned in your country)
+$usediscord=false; // set to true to use discord instead of telegram
+// get the webhook url from your discord server.
+$webhookurl=''
+
+
 // target to watch
 $watch_values = array(
     array("BTC", "USDT", 64000.00),
